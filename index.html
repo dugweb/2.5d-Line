@@ -1,0 +1,39 @@
+<html>
+
+<style>
+body, html {
+	padding:0;
+	margin: 0;
+	overflow: hidden;
+	height: 100%;
+}
+</style>
+<body>
+
+
+
+<script type="text/javascript">
+
+document.addEventListener("DOMContentLoaded", init);
+window.addEventListener("resize", resizeHandler);
+
+function init() {
+	var canvas = document.createElement("canvas");
+	canvas.id = "curve";
+	canvas.width = document.width - 10;
+	canvas.height = document.height - 10;
+	canvas.style.border = "5px solid";
+
+	document.body.appendChild(canvas);
+}
+
+function resizeHandler(e) {
+	console.log("width: " + document.width + " height: " + document.height);
+}
+
+
+
+</script>
+
+</body>
+</html>
