@@ -15,22 +15,108 @@ body, html {
 <script type="text/javascript">
 
 document.addEventListener("DOMContentLoaded", init);
-window.addEventListener("resize", resizeHandler);
+
+var self = app;
+var app = {
+	canvas: null,
+	context: null,
+	self: this,
+	// This hack is so that the move event listener can be added & removed
+	// need a reference to the function
+	moveHandlerRef: null,
+	startPoint: {
+		x: 0,
+		y: 0
+	},
+	endPoint: {
+		x: 0,
+		y: 0
+	},
+
+	init: function() {
+
+		// Create canvas
+		this.canvas = document.createElement("canvas");
+		this.canvas.id = "curve";
+		this.canvas.width = document.width - 10;
+		this.canvas.height = document.height - 10;
+		this.canvas.style.border = "5px solid";
+
+		// add it to document
+		document.body.appendChild(this.canvas);
+
+		this.context = this.canvas.getContext('2d');
+
+		// Add event listeners while passing a reference to the object
+		// Annoying, and feels like a hack, but oh well.
+		var self = this;
+		window.addEventListener("resize", function(e) {
+			self.resizeHandler(e, self);
+		}, false);
+		window.addEventListener("mousedown", function(e) {
+			self.downHandler(e, self);
+		}, false);
+		this.canvas.addEventListener("mouseup", function(e) {
+			self.upHandler(e, self);
+		}, false);
+	},
+
+	resizeHandler: function(e, context) {
+		console.log("width: " + document.width + " height: " + document.height);
+	},
+	downHandler: function(e, context) {
+		var self = context;
+		self.setPoint(e.x, e.y, 'start');
+		self.setPoint(e.x, e.y, 'end');
+		self.moveHandlerRef = function(e, context) {
+			self.moveHandler(e, self);
+		}
+		this.canvas.addEventListener("mousemove", self.moveHandlerRef, false);
+	},
+	upHandler: function(e, context) {
+		var self = context;
+
+		this.canvas.removeEventListener("mousemove", self.moveHandlerRef, false);
+	},
+	moveHandler: function(e, context) {
+		var self = context;
+		
+		self.setPoint(e.x, e.y, 'end');
+	},
+	render: function() {
+		// fresh canvas
+		var ctx = this.context
+		ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+		ctx.save();
+
+		ctx.beginPath();
+		ctx.moveTo(this.startPoint.x, this.startPoint.y);
+		ctx.lineTo(this.endPoint.x, this.endPoint.y);
+
+		ctx.lineWidth = 10;
+		ctx.lineCap = 'round';
+		ctx.strokeStyle = 'black';
+		ctx.stroke();
+
+	},
+
+	setPoint: function(x, y, point) {
+		var p =  {'x': x, 'y': y};
+		if (point == 'end') {
+			this.endPoint = p;
+		} else if (point === 'start') {
+			this.startPoint = p;
+		}
+
+		this.render();
+	}
+
+
+}
 
 function init() {
-	var canvas = document.createElement("canvas");
-	canvas.id = "curve";
-	canvas.width = document.width - 10;
-	canvas.height = document.height - 10;
-	canvas.style.border = "5px solid";
-
-	document.body.appendChild(canvas);
+	app.init();
 }
-
-function resizeHandler(e) {
-	console.log("width: " + document.width + " height: " + document.height);
-}
-
 
 
 </script>
