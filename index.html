@@ -62,6 +62,9 @@ var app = {
 	},
 
 	resizeHandler: function(e, context) {
+		var self = context;
+		self.canvas.width = document.width - 10;
+		self.canvas.height = document.height - 10;
 		console.log("width: " + document.width + " height: " + document.height);
 	},
 	downHandler: function(e, context) {
@@ -91,7 +94,12 @@ var app = {
 
 		ctx.beginPath();
 		ctx.moveTo(this.startPoint.x, this.startPoint.y);
-		ctx.lineTo(this.endPoint.x, this.endPoint.y);
+
+		var midpoint = {
+			x: this.startPoint.x + this.endPoint.x / 2,
+			y: this.startPoint.y + this.endPoint.y / 2,
+		}
+		ctx.quadraticCurveTo(midpoint.x, this.endPoint.y, this.endPoint.x, this.endPoint.y);
 
 		ctx.lineWidth = 10;
 		ctx.lineCap = 'round';
