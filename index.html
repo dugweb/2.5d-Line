@@ -6,10 +6,24 @@ body, html {
 	margin: 0;
 	overflow: hidden;
 	height: 100%;
+	background:#fefefe;
+}
+#options {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+	background: rgba(255,255,255,.8);
+	padding: 10px;
 }
 </style>
 <body>
 
+
+<div id="options">
+	<label for="displayPoints">Display Anchor Point</label>
+	<input type="checkbox" name="points" id="displayPoints" />
+	
+</div>
 
 
 <script type="text/javascript">
@@ -21,6 +35,9 @@ var app = {
 	canvas: null,
 	context: null,
 	self: this,
+	bgpattern: null,
+	canvasPadding: 10,
+	displayPoints: false,
 	// This hack is so that the move event listener can be added & removed
 	// need a reference to the function
 	moveHandlerRef: null,
@@ -38,8 +55,8 @@ var app = {
 		// Create canvas
 		this.canvas = document.createElement("canvas");
 		this.canvas.id = "curve";
-		this.canvas.width = document.width - 10;
-		this.canvas.height = document.height - 10;
+		this.canvas.width = document.width - this.canvasPadding;
+		this.canvas.height = document.height - this.canvasPadding;
 		this.canvas.style.border = "5px solid";
 
 		// add it to document
@@ -47,13 +64,15 @@ var app = {
 
 		this.context = this.canvas.getContext('2d');
 
+		this.setupBG(this.context, "tile_bg.png");
+
 		// Add event listeners while passing a reference to the object
 		// Annoying, and feels like a hack, but oh well.
 		var self = this;
 		window.addEventListener("resize", function(e) {
 			self.resizeHandler(e, self);
 		}, false);
-		window.addEventListener("mousedown", function(e) {
+		this.canvas.addEventListener("mousedown", function(e) {
 			self.downHandler(e, self);
 		}, false);
 		this.canvas.addEventListener("mouseup", function(e) {
@@ -63,9 +82,10 @@ var app = {
 
 	resizeHandler: function(e, context) {
 		var self = context;
-		self.canvas.width = document.width - 10;
-		self.canvas.height = document.height - 10;
-		console.log("width: " + document.width + " height: " + document.height);
+		self.canvas.width = document.width - self.canvasPadding;
+		self.canvas.height = document.height - self.canvasPadding;
+		
+		this.render();
 	},
 	downHandler: function(e, context) {
 		var self = context;
@@ -88,24 +108,42 @@ var app = {
 	},
 	render: function() {
 		// fresh canvas
-		var ctx = this.context
+		var ctx = this.context;
 		ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
 		ctx.save();
+
+		if (this.bgpattern !== null) {
+			ctx.fillStyle = this.bgpattern;
+			ctx.fillRect(0,0,document.width, document.height);
+		}
 
 		ctx.beginPath();
 		ctx.moveTo(this.startPoint.x, this.startPoint.y);
 
 		var midpoint = {
-			x: this.startPoint.x + this.endPoint.x / 2,
-			y: this.startPoint.y + this.endPoint.y / 2,
+			x: (this.startPoint.x + this.endPoint.x) / 2,
+			y: (this.startPoint.y + this.endPoint.y) / 2,
 		}
-		ctx.quadraticCurveTo(midpoint.x, this.endPoint.y, this.endPoint.x, this.endPoint.y);
+		var anchorPoint = {
+			x: midpoint.x,
+			y: this.endPoint.y
+		}
+		ctx.quadraticCurveTo(anchorPoint.x, anchorPoint.y, this.endPoint.x, this.endPoint.y);
 
 		ctx.lineWidth = 10;
 		ctx.lineCap = 'round';
 		ctx.strokeStyle = 'black';
 		ctx.stroke();
 
+		ctx.strokeStyle = 'rgba(0,0,0,.05)';
+		ctx.beginPath();
+		ctx.moveTo(this.startPoint.x, this.startPoint.y);
+		ctx.lineTo(this.endPoint.x, this.endPoint.y);
+		ctx.stroke();
+
+		if (this.displayPoints) {
+			this.drawPoint(anchorPoint, "rgba(255,0,0,1)");
+		}
 	},
 
 	setPoint: function(x, y, point) {
@@ -117,13 +155,65 @@ var app = {
 		}
 
 		this.render();
+	},
+	setupBG: function(canvasContext, imagePath) {
+		var ctx = canvasContext;
+		var self = this;
+
+		var img = new Image();
+		img.src = imagePath;
+		img.addEventListener("load", function(e) {
+			// create pattern
+			
+			self.bgpattern = ctx.createPattern(img, 'repeat');
+			self.render();
+		});
+	},
+	setOptions: function(prop, value) {
+		this[prop] = value;
+		this.render();
+	},
+	drawPoint: function(pointObject, color) {
+		var ctx = this.context;
+		var point = pointObject;
+
+		ctx.strokeStyle = color;
+
+
+		ctx.beginPath();
+		ctx.moveTo(point.x, point.y);
+		ctx.lineTo(point.x + 1, point.y + 1);
+		ctx.stroke();
 	}
-
-
 }
 
 function init() {
-	app.init();
+	app.init()
+
+
+	// The ability to have several display options
+	// e.g. to display the anchor points or not
+	var options = {
+		displayPoints: document.getElementById('displayPoints')
+	};
+
+	options.each(function(prop) {
+		prop.addEventListener('click', propertyHandler);
+	});
+}
+
+function propertyHandler(e) {
+	app.setOptions(e.target.id, e.target.checked);
+}
+
+// Helper function I got from todomvc.com to iterate through object properties
+// and perform a callback
+Object.prototype.each = function(callback) {
+	for (var x in this) {
+		if (this.hasOwnProperty(x)) {
+			callback.call(this, this[x]);
+		}
+	}
 }
 
 
