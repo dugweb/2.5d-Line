@@ -30,7 +30,7 @@ body, html {
 
 document.addEventListener("DOMContentLoaded", init);
 
-var self = app;
+
 var app = {
 	canvas: null,
 	context: null,
@@ -71,19 +71,21 @@ var app = {
 		var self = this;
 		window.addEventListener("resize", function(e) {
 			self.resizeHandler(e, self);
-		}, false);
+		}, true);
 		this.canvas.addEventListener("mousedown", function(e) {
 			self.downHandler(e, self);
 		}, false);
 		this.canvas.addEventListener("mouseup", function(e) {
 			self.upHandler(e, self);
 		}, false);
+
+		this.resizeHandler("judist", self);
 	},
 
 	resizeHandler: function(e, context) {
 		var self = context;
-		self.canvas.width = document.width - self.canvasPadding;
-		self.canvas.height = document.height - self.canvasPadding;
+		self.canvas.width = window.innerWidth - self.canvasPadding;
+		self.canvas.height = window.innerHeight - self.canvasPadding;
 		
 		this.render();
 	},
